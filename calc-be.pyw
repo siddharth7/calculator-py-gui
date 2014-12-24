@@ -1,8 +1,63 @@
 import sys
 from calcwithbtn import *
+from pythonds.basic.stack import Stack
+
 a=''
 b=''
-d=''
+c=''
+def postfixEval(postfixExpr):
+    operandStack = Stack()
+    tokenList = postfixExpr.split()
+
+    for token in tokenList:
+        if token not in "+-/*":
+            operandStack.push(float(token))
+        else:
+            operand2 = operandStack.pop()
+            operand1 = operandStack.pop()
+            result = doMath(token,operand1,operand2)
+            operandStack.push(result)
+    return operandStack.pop()
+
+def doMath(op, op1, op2):
+    if op == "*":
+        return op1 * op2
+    elif op == "/":
+        return op1 / op2
+    elif op == "+":
+        return op1 + op2
+    else:
+        return op1 - op2
+def infixToPostfix(infixexpr):
+    prec = {}
+    prec["*"] = 3
+    prec["/"] = 3
+    prec["+"] = 2
+    prec["-"] = 2
+    prec["("] = 1
+    opStack = Stack()
+    postfixList = []
+    tokenList = infixexpr.split()
+
+    for token in tokenList:
+        if token not in "+-/*":
+            postfixList.append(token)
+        elif token == '(':
+            opStack.push(token)
+        elif token == ')':
+            topToken = opStack.pop()
+            while topToken != '(':
+                postfixList.append(topToken)
+                topToken = opStack.pop()
+        else:
+            while (not opStack.isEmpty()) and \
+               (prec[opStack.peek()] >= prec[token]):
+                  postfixList.append(opStack.pop())
+            opStack.push(token)
+
+    while not opStack.isEmpty():
+        postfixList.append(opStack.pop())
+    return " ".join(postfixList)
 class MyForm(QtGui.QDialog):
 	def __init__(self,parent=None):
 		QtGui.QWidget.__init__(self,parent)
@@ -23,6 +78,9 @@ class MyForm(QtGui.QDialog):
 		QtCore.QObject.connect(self.ui.mul,QtCore.SIGNAL('clicked()'),self.mu)
 		QtCore.QObject.connect(self.ui.div,QtCore.SIGNAL('clicked()'),self.di)
 		QtCore.QObject.connect(self.ui.calc,QtCore.SIGNAL('clicked()'),self.cal)
+		QtCore.QObject.connect(self.ui.bclear,QtCore.SIGNAL('clicked()'),self.cl)
+		QtCore.QObject.connect(self.ui.dotbtn,QtCore.SIGNAL('clicked()'),self.dt)
+		QtCore.QObject.connect(self.ui.bspace,QtCore.SIGNAL('clicked()'),self.bs)
 	def e1(self):
 		global a
 		a=a+'1'
@@ -63,81 +121,52 @@ class MyForm(QtGui.QDialog):
 		global a
 		a=a+'0'
 		self.ui.num.setText(a)
+	def bs(self):
+		global a
+		a=a[:-1]
+		self.ui.num.setText(a)
+	def dt(self):
+		global a
+		a=a+'.'
+		self.ui.num.setText(a)
+	def cl(self):
+		global a
+		a=''
+		self.ui.num.clear()
 	def ad(self):
-		global b
 		global a
-		global d
-		self.ui.num.setText('\n+\n')
-		d=d+'+'
-		b=a
-		a=''
-
-
+		a=a+' '
+		a=a+'+'
+		a=a+' '
+		self.ui.num.setText(a)
 	def su(self):
-		global b
 		global a
-		global d
-		self.ui.num.setText('\n-\n')
-		d=d+'-'
-		b=a
-		a=''
-
-		
+		a=a+' '
+		a=a+'-'
+		a=a+' '
+		self.ui.num.setText(a)
 	def mu(self):
-		global b
 		global a
-		global d
-		self.ui.num.setText('\nx\n')
-		d=d+'x'
-		b=a
-		a=''
-		
+		a=a+' '
+		a=a+'*'
+		a=a+' '
+		self.ui.num.setText(a)
 	def di(self):
-		global b
 		global a
-		global d
-		self.ui.num.setText('\n/\n')
-		d=d+'/'
-		b=a
-		a=''
-		
-
+		a=a+' '
+		a=a+'/'
+		a=a+' ' 
+		self.ui.num.setText(a)
 	def cal(self):
 		global a
 		global b
-		global d
-		self.ui.num.clear()
-		self.ui.num.clear()
-		if(d=='+'):
-			c=int(a)+int(b)
-			self.ui.num.setText(str(c))
-			c=''
-			b=''
-			a=''
-			d=''
-		if(d=='-'):
-			c=int(b)-int(a)
-			self.ui.num.setText(str(c))
-			c=''
-			b=''
-			a=''
-			d=''
-		if(d=='x'):
-			c=int(a)*int(b)
-			self.ui.num.setText(str(c))
-			c=''
-			b=''
-			a=''
-			d=''
-		if(d=='/'):
-			c=float(b)/float(a)
-			self.ui.num.setText(str(c))
-			c=''
-			b=''
-			a=''
-			d=''
-
-
+		global c
+		b=infixToPostfix(a)
+		c=postfixEval(b)
+		a=str(c)
+		self.ui.num.setText(a)
+		b=''
+		c=''
 if __name__=='__main__':
     app=QtGui.QApplication(sys.argv)
     ex=MyForm()
